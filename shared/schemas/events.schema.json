@@ -1,0 +1,117 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://resistance.local/schemas/events.schema.json",
+  "title": "Events",
+  "description": "A2A SSE event payloads and error response (protocol §9, §11).",
+  "oneOf": [
+    { "$ref": "#/$defs/TaskEvent" },
+    { "$ref": "#/$defs/TaskStatusUpdateEvent" },
+    { "$ref": "#/$defs/TaskArtifactUpdateEvent" },
+    { "$ref": "#/$defs/ErrorResponse" }
+  ],
+  "$defs": {
+    "TaskEvent": {
+      "type": "object",
+      "description": "The first SSE event; a Task in TASK_STATE_SUBMITTED.",
+      "additionalProperties": false,
+      "required": ["kind", "task"],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "const": "task"
+        },
+        "task": {
+          "$ref": "task.schema.json#/$defs/Task"
+        }
+      }
+    },
+    "TaskStatusUpdateEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "taskId", "contextId", "status", "final"],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "const": "status-update"
+        },
+        "taskId": {
+          "type": "string",
+          "examples": ["task-3f2a1c9e-7b8d-4e21-9c0a-1f2e3d4c5b6a"]
+        },
+        "contextId": {
+          "type": "string",
+          "examples": ["operation-echo-shield"]
+        },
+        "status": {
+          "$ref": "task.schema.json#/$defs/TaskStatus"
+        },
+        "final": {
+          "type": "boolean"
+        }
+      }
+    },
+    "TaskArtifactUpdateEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "taskId", "contextId", "artifact", "final"],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "const": "artifact-update"
+        },
+        "taskId": {
+          "type": "string",
+          "examples": ["task-3f2a1c9e-7b8d-4e21-9c0a-1f2e3d4c5b6a"]
+        },
+        "contextId": {
+          "type": "string",
+          "examples": ["operation-echo-shield"]
+        },
+        "artifact": {
+          "$ref": "artifact.schema.json#/$defs/Artifact"
+        },
+        "final": {
+          "type": "boolean"
+        }
+      }
+    },
+    "ErrorResponse": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["error"],
+      "properties": {
+        "error": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["code", "message", "httpStatus"],
+          "properties": {
+            "code": {
+              "type": "string",
+              "enum": [
+                "AUTH_REQUIRED",
+                "BAD_REQUEST",
+                "TASK_NOT_FOUND",
+                "TASK_NOT_CANCELABLE",
+                "SKILL_NOT_FOUND",
+                "AGENT_NOT_FOUND",
+                "INTERNAL"
+              ]
+            },
+            "message": {
+              "type": "string",
+              "examples": ["No task task-x"]
+            },
+            "httpStatus": {
+              "type": "integer",
+              "examples": [401, 400, 404, 409, 500]
+            },
+            "correlationId": {
+              "type": "string",
+              "examples": ["corr-1a2b3c4d-5e6f-4708-9a0b-1c2d3e4f5a6b"]
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,159 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://resistance.local/schemas/agent-card.schema.json",
+  "title": "AgentCard",
+  "description": "A2A Agent Card returned verbatim from GET /.well-known/agent-card.json (protocol §3).",
+  "type": "object",
+  "$ref": "#/$defs/AgentCard",
+  "$defs": {
+    "AgentCard": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "name",
+        "description",
+        "provider",
+        "version",
+        "url",
+        "capabilities",
+        "defaultInputModes",
+        "defaultOutputModes",
+        "skills",
+        "securitySchemes",
+        "security"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Agent name, e.g. intelligence-agent."
+        },
+        "description": {
+          "type": "string"
+        },
+        "provider": {
+          "$ref": "#/$defs/AgentProvider"
+        },
+        "version": {
+          "type": "string",
+          "examples": ["1.0.0"]
+        },
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "description": "The agent's own base URL (docker-compose service name + port)."
+        },
+        "capabilities": {
+          "$ref": "#/$defs/AgentCapabilities"
+        },
+        "defaultInputModes": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "defaultOutputModes": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "skills": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/AgentSkill" }
+        },
+        "securitySchemes": {
+          "$ref": "#/$defs/SecuritySchemes"
+        },
+        "security": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          },
+          "description": "List of security requirement objects, e.g. [ { \"demoApiKey\": [] } ]."
+        }
+      }
+    },
+    "AgentProvider": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["organization", "url"],
+      "properties": {
+        "organization": {
+          "type": "string",
+          "examples": ["Rebel Alliance"]
+        },
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "examples": ["https://resistance.local"]
+        }
+      }
+    },
+    "AgentCapabilities": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["streaming", "pushNotifications"],
+      "properties": {
+        "streaming": { "type": "boolean" },
+        "pushNotifications": { "type": "boolean" }
+      }
+    },
+    "AgentSkill": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "description", "inputModes", "outputModes", "examples"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "examples": ["scout_system"]
+        },
+        "name": {
+          "type": "string",
+          "examples": ["Scout Star System"]
+        },
+        "description": {
+          "type": "string"
+        },
+        "inputModes": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "outputModes": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "examples": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "SecuritySchemes": {
+      "type": "object",
+      "description": "Map of security scheme name to its definition.",
+      "additionalProperties": { "$ref": "#/$defs/SecurityScheme" },
+      "properties": {
+        "demoApiKey": { "$ref": "#/$defs/SecurityScheme" }
+      }
+    },
+    "SecurityScheme": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "in", "name"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["apiKey"]
+        },
+        "in": {
+          "type": "string",
+          "enum": ["header"]
+        },
+        "name": {
+          "type": "string",
+          "examples": ["X-Demo-Token"]
+        }
+      }
+    }
+  }
+}

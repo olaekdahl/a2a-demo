@@ -1,0 +1,24 @@
+{
+  "artifactId": "art-2c4e6a80-1b3d-4f57-9e2a-7c8d9e0f1a2b",
+  "name": "tactical-assessment",
+  "description": "Deterministic risk assessment of the Hoth system.",
+  "parts": [
+    {
+      "data": {
+        "threat_level": "HIGH",
+        "risk_score": 91,
+        "recommended_action": "REINFORCE_AND_EVACUATE_NONESSENTIAL_PERSONNEL",
+        "priority_targets": [
+          "star_destroyers",
+          "at_at_walkers",
+          "orbital_probe_network"
+        ],
+        "rationale": "Detected Imperial strength exceeds local defensive capacity."
+      },
+      "mediaType": "application/json"
+    }
+  ],
+  "metadata": {
+    "producedBy": "tactical-agent"
+  }
+}

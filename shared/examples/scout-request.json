@@ -1,0 +1,31 @@
+{
+  "message": {
+    "messageId": "msg-7c0e2a4b-0d2d-4b9a-9d1d-4d1c8a2f3e10",
+    "contextId": "operation-echo-shield",
+    "role": "ROLE_USER",
+    "parts": [
+      {
+        "text": "Scout the Hoth system for Imperial movement.",
+        "mediaType": "text/plain"
+      },
+      {
+        "data": {
+          "mission": "operation-echo-shield",
+          "system": "Hoth",
+          "skill": "scout_system"
+        },
+        "mediaType": "application/json"
+      }
+    ],
+    "metadata": {
+      "sender": "resistance-command-agent",
+      "recipient": "intelligence-agent",
+      "correlationId": "corr-1a2b3c4d-5e6f-4708-9a0b-1c2d3e4f5a6b",
+      "traceId": "trace-9f8e7d6c-5b4a-4938-8271-605f4e3d2c1b",
+      "skillId": "scout_system"
+    }
+  },
+  "configuration": {
+    "acceptedOutputModes": ["application/json", "text/plain"]
+  }
+}

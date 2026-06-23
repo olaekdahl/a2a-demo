@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://resistance.local/schemas/task.schema.json",
+  "title": "Task",
+  "description": "A2A Task, TaskStatus and TaskState enum (protocol §6).",
+  "$ref": "#/$defs/Task",
+  "$defs": {
+    "TaskState": {
+      "type": "string",
+      "description": "Normative TaskState enum (string values).",
+      "enum": [
+        "TASK_STATE_SUBMITTED",
+        "TASK_STATE_WORKING",
+        "TASK_STATE_INPUT_REQUIRED",
+        "TASK_STATE_AUTH_REQUIRED",
+        "TASK_STATE_COMPLETED",
+        "TASK_STATE_FAILED",
+        "TASK_STATE_CANCELED",
+        "TASK_STATE_REJECTED"
+      ]
+    },
+    "TaskStatus": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "timestamp"],
+      "properties": {
+        "state": { "$ref": "#/$defs/TaskState" },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO-8601 UTC with milliseconds and a trailing Z.",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$",
+          "examples": ["2026-06-23T10:15:00.000Z"]
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "phase": {
+              "type": "string",
+              "description": "Domain-specific progress label, e.g. scanning_orbit, jump_to_lightspeed."
+            },
+            "display": {
+              "type": "string",
+              "description": "Human-friendly Star-Wars-flavored string."
+            }
+          }
+        }
+      }
+    },
+    "Task": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "contextId", "status"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "examples": ["task-3f2a1c9e-7b8d-4e21-9c0a-1f2e3d4c5b6a"]
+        },
+        "contextId": {
+          "type": "string",
+          "examples": ["operation-echo-shield"]
+        },
+        "status": { "$ref": "#/$defs/TaskStatus" },
+        "history": {
+          "type": "array",
+          "items": { "$ref": "message.schema.json#/$defs/Message" }
+        },
+        "artifacts": {
+          "type": "array",
+          "items": { "$ref": "artifact.schema.json#/$defs/Artifact" }
+        }
+      }
+    }
+  }
+}

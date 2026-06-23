@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Build output
+dist/
+build/
+*.egg-info/
+typescript/*/dist/
+
+# Runtime data
+*.db
+*.db-wal
+*.db-shm
+storage/*.db
+data/
+.env
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
+*.log
+
+# local-only port-conflict override
+docker-compose.override.yml

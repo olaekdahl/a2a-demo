@@ -1,0 +1,17 @@
+# Keep build contexts lean. The Python services build with the repo root as
+# context, so exclude everything that must never enter those images.
+**/node_modules
+**/__pycache__
+**/*.pyc
+**/dist
+**/build
+**/.venv
+**/venv
+**/*.db
+**/*.db-wal
+**/*.db-shm
+.git
+.gitignore
+**/.DS_Store
+**/*.log
+data/

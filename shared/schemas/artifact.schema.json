@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://resistance.local/schemas/artifact.schema.json",
+  "title": "Artifact",
+  "description": "A2A Artifact (protocol §7). The domain payload lives in parts[].data.",
+  "$ref": "#/$defs/Artifact",
+  "$defs": {
+    "Artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifactId", "name", "parts"],
+      "properties": {
+        "artifactId": {
+          "type": "string",
+          "examples": ["art-9b1c2d3e-4f50-4a6b-8c7d-9e0f1a2b3c4d"]
+        },
+        "name": {
+          "type": "string",
+          "examples": [
+            "intelligence-report",
+            "tactical-assessment",
+            "logistics-assessment",
+            "secure-transmission",
+            "deployment-order"
+          ]
+        },
+        "description": {
+          "type": "string"
+        },
+        "parts": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "message.schema.json#/$defs/Part" }
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "producedBy": {
+              "type": "string",
+              "description": "Name of the agent that produced this artifact."
+            }
+          }
+        }
+      }
+    }
+  }
+}

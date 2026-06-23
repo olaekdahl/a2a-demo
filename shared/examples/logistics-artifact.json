@@ -1,0 +1,25 @@
+{
+  "artifactId": "art-5d7f9b13-2e4a-4c68-8a1b-3c5d7e9f0a1b",
+  "name": "logistics-assessment",
+  "description": "Transport, fuel and troop-movement assessment for Hoth.",
+  "parts": [
+    {
+      "data": {
+        "available_transports": 14,
+        "available_x_wings": 22,
+        "available_medical_units": 6,
+        "fuel_percentage": 82,
+        "evacuation_capacity": 4200,
+        "recommended_troop_movement": {
+          "reinforce_echo_base": 1200,
+          "evacuate_civilians": 700,
+          "reserve_defensive_units": 300
+        }
+      },
+      "mediaType": "application/json"
+    }
+  ],
+  "metadata": {
+    "producedBy": "logistics-agent"
+  }
+}

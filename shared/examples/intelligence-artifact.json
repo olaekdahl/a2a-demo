@@ -1,0 +1,26 @@
+{
+  "artifactId": "art-9b1c2d3e-4f50-4a6b-8c7d-9e0f1a2b3c4d",
+  "name": "intelligence-report",
+  "description": "Imperial activity scan of the Hoth system.",
+  "parts": [
+    {
+      "data": {
+        "system": "Hoth",
+        "empire_presence": true,
+        "confidence": 0.94,
+        "detected_units": {
+          "stormtroopers": 1800,
+          "at_at_walkers": 12,
+          "at_st_walkers": 28,
+          "star_destroyers": 3,
+          "probe_droids": 9
+        },
+        "transmission": "Imperial armor columns detected beyond the northern ridge."
+      },
+      "mediaType": "application/json"
+    }
+  ],
+  "metadata": {
+    "producedBy": "intelligence-agent"
+  }
+}

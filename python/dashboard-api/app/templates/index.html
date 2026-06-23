@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="dark" />
+  <title>Echo Command Interface — Operation Echo Shield</title>
+  <link rel="stylesheet" href="/static/echo-command.css" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 2 4 9v14l12 7 12-7V9z' fill='none' stroke='%234fd6e6' stroke-width='2'/%3E%3Ccircle cx='16' cy='16' r='3' fill='%23e0a838'/%3E%3C/svg%3E" />
+</head>
+<body data-a2a-version="{{ a2a_version }}">
+
+  <!-- ============ Full-screen scanline / noise overlay ============ -->
+  <div id="scanlines" class="scanlines" aria-hidden="true"></div>
+
+  <!-- ============ Boot sequence overlay ============ -->
+  <div id="boot-overlay" role="dialog" aria-label="Echo Command Interface boot sequence" aria-modal="false">
+    <div class="boot-frame">
+      <div class="boot-frame__brackets" aria-hidden="true"></div>
+      <div class="boot-head">
+        <span class="boot-sigil" aria-hidden="true">
+          <svg viewBox="0 0 40 40" width="40" height="40" focusable="false">
+            <path d="M20 3 5 11v18l15 8 15-8V11z" fill="none" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M20 9 11 14v12l9 5 9-5V14z" fill="none" stroke="currentColor" stroke-width="1"/>
+            <circle cx="20" cy="20" r="3.5" fill="currentColor"/>
+          </svg>
+        </span>
+        <div class="boot-head__text">
+          <span class="boot-title">ECHO COMMAND INTERFACE</span>
+          <span class="boot-sub">FULCRUM SECURE TERMINAL · A2A LINK</span>
+        </div>
+      </div>
+      <div id="boot-log" class="boot-log" role="log" aria-live="polite" aria-label="Boot log"></div>
+      <div class="boot-foot">
+        <span class="boot-prog" aria-hidden="true"><span class="boot-prog__bar"></span></span>
+        <button id="boot-skip" type="button" class="boot-skip" aria-label="Skip boot sequence">SKIP&nbsp;&#9656;</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== ZONE 1 — COMMAND HEADER ===================== -->
+  <header id="command-header" aria-label="Command header" aria-live="polite">
+    <div class="ch-rule" aria-hidden="true"></div>
+
+    <div class="ch-row ch-row--top">
+      <div class="ch-brand">
+        <span class="ch-brand__sigil" aria-hidden="true">
+          <svg viewBox="0 0 34 34" width="30" height="30" focusable="false">
+            <path d="M17 2 4 9.5v15L17 32l13-7.5v-15z" fill="none" stroke="currentColor" stroke-width="1.4"/>
+            <circle cx="17" cy="17" r="2.6" fill="currentColor"/>
+          </svg>
+        </span>
+        <div class="ch-brand__text">
+          <h1 class="ch-title">OPERATION ECHO SHIELD</h1>
+          <p class="ch-subtitle">ECHO COMMAND INTERFACE · RESISTANCE TACTICAL CONSOLE</p>
+        </div>
+        <span class="stamp ch-stamp" aria-hidden="true">CLASSIFIED</span>
+      </div>
+
+      <div class="ch-controls">
+        <div class="ch-uplink" id="ch-uplink" aria-label="Uplink channel">
+          <span class="ch-uplink__label">UPLINK: FULCRUM CHANNEL</span>
+          <span class="ch-uplink__enc">ENCRYPTED</span>
+          <span class="ch-uplink__dot" id="ch-uplink-dot" aria-hidden="true"></span>
+        </div>
+        <div class="ch-conn" aria-label="Live link status">
+          <span class="conn-lamp conn--idle" id="ch-conn-dot" aria-hidden="true"></span>
+          <span class="ch-conn__text" id="ch-conn">STANDBY</span>
+        </div>
+        <div class="ch-buttons">
+          <button id="btn-run" type="button" class="btn btn--primary" aria-label="Dispatch a fresh mission">
+            <span class="btn__glyph" aria-hidden="true">&#9656;</span><span class="btn__text">DISPATCH MISSION</span>
+          </button>
+          <button id="btn-replay" type="button" class="btn btn--ghost" aria-label="Replay stored mission timeline">
+            <span class="btn__glyph" aria-hidden="true">&#9654;</span><span class="btn__text">REPLAY</span>
+          </button>
+          <button id="btn-replay-stop" type="button" class="btn btn--ghost btn--stop" aria-label="Stop replay" hidden>
+            <span class="btn__glyph" aria-hidden="true">&#9632;</span><span class="btn__text">STOP</span>
+          </button>
+          <button id="btn-reset" type="button" class="btn btn--ghost" aria-label="Reset the console to a nominal standby state">
+            <span class="btn__glyph" aria-hidden="true">&#8635;</span><span class="btn__text">RESET</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="ch-replaybar" aria-hidden="true">
+      <div class="replay-track"><div class="replay-track__fill" id="replay-fill"></div></div>
+    </div>
+
+    <div class="ch-row ch-row--readout">
+      <ul class="ch-readout" aria-label="Mission readout">
+        <li class="ro"><span class="ro__k">THEATER</span><span class="ro__v" id="ch-theater">HOTH / ECHO BASE</span></li>
+        <li class="ro"><span class="ro__k">STATUS</span><span class="ro__v" id="ch-status">&mdash;</span></li>
+        <li class="ro"><span class="ro__k">PHASE</span><span class="ro__v" id="ch-phase">&mdash;</span></li>
+        <li class="ro"><span class="ro__k">THREAT</span><span class="ro__v" id="ch-threat">&mdash;</span></li>
+        <li class="ro"><span class="ro__k">CONTEXT</span><span class="ro__v ro__v--mono" id="ch-context">&mdash;</span></li>
+        <li class="ro"><span class="ro__k">PROTOCOL</span><span class="ro__v ro__v--mono" id="ch-protocol">A2A/&mdash;</span></li>
+        <li class="ro ro--clock"><span class="ro__k">UTC</span><span class="ro__v ro__v--mono" id="ch-clock">&mdash;&mdash;&mdash;&mdash;-&mdash;&mdash;-&mdash;&mdash; &mdash;&mdash;:&mdash;&mdash;:&mdash;&mdash;</span></li>
+      </ul>
+    </div>
+  </header>
+
+  <!-- ===================== MAIN CONSOLE GRID ===================== -->
+  <main id="console">
+
+    <!-- ============ ZONE 3 — TRANSMISSION SPINE (left) ============ -->
+    <section id="spine-zone" class="panel panel--spine" aria-label="Transmission spine">
+      <div class="panel__brackets" aria-hidden="true"></div>
+      <div class="panel__rivets" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+      <div class="panel__label">
+        <span class="panel__label-tick" aria-hidden="true">&#9656;</span>
+        <span class="panel__label-text">TRANSMISSION SPINE</span>
+        <span class="badge panel__label-badge" id="spine-count">0</span>
+      </div>
+      <div class="panel__body panel__body--spine">
+        <ol id="spine" class="spine" aria-label="Live A2A comm packets" aria-live="polite"></ol>
+        <div id="spine-empty" class="spine-empty">
+          <span class="spine-empty__icon" aria-hidden="true">&#9678;</span>
+          <span class="spine-empty__text">NO TRAFFIC ON FULCRUM CHANNEL &mdash; STANDBY</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ ZONE 2 — HOLOTABLE (center, centerpiece) ============ -->
+    <section id="holotable-zone" class="panel panel--holotable" aria-label="Tactical holotable">
+      <div class="panel__brackets" aria-hidden="true"></div>
+      <div class="panel__rivets" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+      <div class="panel__label">
+        <span class="panel__label-tick" aria-hidden="true">&#9670;</span>
+        <span class="panel__label-text">TACTICAL HOLOTABLE</span>
+        <span class="panel__label-meta" id="holotable-phase">PHASE: STANDBY</span>
+      </div>
+      <div class="panel__body panel__body--holotable">
+        <div class="holotable-stage">
+          <canvas id="holotable-fx" class="holotable-fx" aria-hidden="true"></canvas>
+          <svg id="holotable" viewBox="0 0 720 720" preserveAspectRatio="xMidYMid meet"
+               role="img" aria-label="Agent communication graph and fleet route over Hoth"></svg>
+          <div id="mission-stamp" class="stamp mission-stamp" aria-hidden="true">REINFORCEMENTS&nbsp;DEPLOYED</div>
+        </div>
+        <div id="holotable-legend" class="holotable-legend" aria-label="Holotable legend">
+          <span class="ht-legend__item"><i class="ht-legend__shape ht-legend__shape--python" aria-hidden="true"></i>PYTHON · COMMAND</span>
+          <span class="ht-legend__item"><i class="ht-legend__shape ht-legend__shape--typescript" aria-hidden="true"></i>TYPESCRIPT · SIGNAL</span>
+          <span class="ht-legend__item"><i class="ht-legend__shape ht-legend__shape--go" aria-hidden="true"></i>GO · TACTICAL</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ ZONE 5 — OPS STACK (right column) ============ -->
+    <aside id="ops-stack" aria-label="Operations modules">
+
+      <!-- A. Agent Roster -->
+      <section id="mod-roster" class="panel panel--module" aria-label="Agent roster">
+        <div class="panel__brackets" aria-hidden="true"></div>
+        <div class="panel__label">
+          <span class="panel__label-tick" aria-hidden="true">&#9656;</span>
+          <span class="panel__label-text">AGENT ROSTER</span>
+          <span class="badge panel__label-badge" id="roster-count">0</span>
+        </div>
+        <div class="panel__body">
+          <div id="roster-list" class="roster-list">
+            <div class="module-standby">SCANNING A2A REGISTRY&hellip;</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- B. Troop Movement -->
+      <section id="mod-troop" class="panel panel--module" aria-label="Troop movement">
+        <div class="panel__brackets" aria-hidden="true"></div>
+        <div class="panel__label">
+          <span class="panel__label-tick" aria-hidden="true">&#9656;</span>
+          <span class="panel__label-text">TROOP MOVEMENT</span>
+          <span class="badge panel__label-badge" id="fleet-phase-tag">STANDBY</span>
+        </div>
+        <div class="panel__body">
+          <div id="troop-empty" class="module-standby">NO DEPLOYMENT ORDER &mdash; FLEET ON STANDBY</div>
+          <div id="troop-grid" class="troop-grid" hidden>
+            <div class="readout-cell"><span class="readout-cell__v" id="t-troops">&mdash;</span><span class="readout-cell__k">GROUND TROOPS</span></div>
+            <div class="readout-cell"><span class="readout-cell__v" id="t-transports">&mdash;</span><span class="readout-cell__k">TRANSPORTS</span></div>
+            <div class="readout-cell"><span class="readout-cell__v" id="t-xwings">&mdash;</span><span class="readout-cell__k">X-WING SQDN</span></div>
+            <div class="readout-cell"><span class="readout-cell__v" id="t-medical">&mdash;</span><span class="readout-cell__k">MEDICAL UNITS</span></div>
+            <div class="readout-cell"><span class="readout-cell__v" id="t-eta">&mdash;</span><span class="readout-cell__k">ETA (MIN)</span></div>
+            <div class="readout-cell"><span class="readout-cell__v" id="t-dest">&mdash;</span><span class="readout-cell__k">DESTINATION</span></div>
+          </div>
+          <div class="fleet-track-wrap">
+            <div class="fleet-track-wrap__head">
+              <span class="micro-label">FLEET ROUTE</span>
+              <span class="badge" id="fleet-phase-tag-2" hidden>&mdash;</span>
+            </div>
+            <ol id="fleet-track" class="fleet-track" aria-label="Fleet phase progress"></ol>
+          </div>
+          <div id="troop-transmission" class="troop-transmission" aria-label="Last fleet transmission"></div>
+        </div>
+      </section>
+
+      <!-- C. Threat Assessment / Risk Heatmap -->
+      <section id="mod-threat" class="panel panel--module" aria-label="Threat assessment">
+        <div class="panel__brackets" aria-hidden="true"></div>
+        <div class="panel__label">
+          <span class="panel__label-tick" aria-hidden="true">&#9650;</span>
+          <span class="panel__label-text">THREAT ASSESSMENT</span>
+        </div>
+        <div class="panel__body">
+          <div id="threat-gauge" class="threat-gauge threat--unknown" aria-label="Threat band">
+            <div class="threat-gauge__head">
+              <span class="threat-gauge__level" id="threat-level">UNKNOWN</span>
+              <span class="threat-gauge__score" id="threat-score">&mdash;</span>
+            </div>
+            <div class="threat-gauge__bar" aria-hidden="true">
+              <div class="threat-gauge__bands">
+                <span class="tb tb--low">LOW</span><span class="tb tb--mod">MOD</span><span class="tb tb--high">HIGH</span>
+              </div>
+              <div class="threat-gauge__needle" id="threat-needle"></div>
+            </div>
+          </div>
+          <div class="threat-reco-row">
+            <span class="micro-label">RECOMMENDED ACTION</span>
+            <span class="threat-reco" id="threat-reco">&mdash;</span>
+          </div>
+          <p class="threat-rationale" id="threat-rationale">Awaiting tactical assessment from intelligence relay.</p>
+          <div class="threat-split">
+            <div class="threat-targets-wrap">
+              <span class="micro-label">PRIORITY TARGETS</span>
+              <ul id="threat-targets" class="threat-targets"><li class="ti-empty">&mdash;</li></ul>
+            </div>
+            <div class="threat-units-wrap">
+              <span class="micro-label">IMPERIAL UNITS</span>
+              <div id="threat-units" class="threat-units"><div class="tu-empty">&mdash;</div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- D. Logistics -->
+      <section id="mod-logistics" class="panel panel--module" aria-label="Logistics">
+        <div class="panel__brackets" aria-hidden="true"></div>
+        <div class="panel__label">
+          <span class="panel__label-tick" aria-hidden="true">&#9656;</span>
+          <span class="panel__label-text">LOGISTICS</span>
+        </div>
+        <div class="panel__body">
+          <div class="log-fuel">
+            <div class="log-fuel__head">
+              <span class="micro-label">FUEL RESERVE</span>
+              <span class="log-fuel__num" id="log-fuel">&mdash;</span>
+            </div>
+            <div id="log-fuel-meter" class="meter meter--ok" role="meter" aria-label="Fuel reserve">
+              <div class="meter__fill" style="width:0%"></div>
+            </div>
+          </div>
+          <div class="log-grid">
+            <div class="readout-cell"><span class="readout-cell__v" id="log-transports">&mdash;</span><span class="readout-cell__k">TRANSPORTS</span></div>
+            <div class="readout-cell"><span class="readout-cell__v" id="log-evac">&mdash;</span><span class="readout-cell__k">EVAC CAPACITY</span></div>
+            <div class="readout-cell readout-cell--wide"><span class="readout-cell__v" id="log-supply">&mdash;</span><span class="readout-cell__k">SUPPLY POSTURE</span></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- E. Dead-Letter Queue -->
+      <section id="mod-deadletter" class="panel panel--module" aria-label="Dead-letter queue">
+        <div class="panel__brackets" aria-hidden="true"></div>
+        <div class="panel__label">
+          <span class="panel__label-tick" aria-hidden="true">&#9650;</span>
+          <span class="panel__label-text">DEAD-LETTER QUEUE</span>
+          <span class="badge panel__label-badge" id="deadletter-tag">NOMINAL</span>
+        </div>
+        <div class="panel__body">
+          <div id="deadletter-list" class="deadletter-list">
+            <div class="deadletter-nominal">NOMINAL &mdash; NO DEAD LETTERS</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- F. Audit Log -->
+      <section id="mod-audit" class="panel panel--module" aria-label="Audit log">
+        <div class="panel__brackets" aria-hidden="true"></div>
+        <div class="panel__label">
+          <span class="panel__label-tick" aria-hidden="true">&#9656;</span>
+          <span class="panel__label-text">AUDIT LOG</span>
+        </div>
+        <div class="panel__body">
+          <ol id="audit-list" class="audit-list" aria-label="Audit records">
+            <li class="module-standby">NO AUDIT RECORDS YET</li>
+          </ol>
+        </div>
+      </section>
+
+    </aside>
+  </main>
+
+  <!-- ===================== ZONE 4 — DECODED DATA PAD ===================== -->
+  <aside id="data-pad" aria-label="Decoded data pad — message inspector" aria-hidden="true">
+    <div class="dp-frame">
+      <div class="panel__brackets" aria-hidden="true"></div>
+      <header class="dp-head">
+        <div class="dp-head__title">
+          <span class="dp-head__tick" aria-hidden="true">&#9656;</span>
+          <span class="dp-head__label" id="dp-label">DECODED DATA PAD</span>
+        </div>
+        <div class="dp-head__actions">
+          <button id="dp-copy" type="button" class="btn btn--ghost btn--sm" aria-label="Copy current tab JSON to clipboard">
+            <span class="btn__glyph" aria-hidden="true">&#9783;</span><span class="btn__text">COPY</span>
+          </button>
+          <button id="dp-close" type="button" class="btn btn--ghost btn--sm" aria-label="Close data pad">
+            <span class="btn__glyph" aria-hidden="true">&times;</span><span class="btn__text">CLOSE</span>
+          </button>
+        </div>
+      </header>
+
+      <div class="dp-meta" aria-label="Transmission metadata">
+        <div class="dp-meta__row"><span class="dp-meta__k">ROUTE</span><span class="dp-meta__v dp-meta__v--mono" id="dp-route">&mdash;</span></div>
+        <div class="dp-meta__row"><span class="dp-meta__k">CORR-ID</span><span class="dp-meta__v dp-meta__v--mono" id="dp-corr">&mdash;</span></div>
+        <div class="dp-meta__row"><span class="dp-meta__k">TRACE</span><span class="dp-meta__v dp-meta__v--mono" id="dp-trace">&mdash;</span></div>
+        <div class="dp-meta__row"><span class="dp-meta__k">A2A-VER</span><span class="dp-meta__v dp-meta__v--mono" id="dp-version">&mdash;</span></div>
+      </div>
+
+      <nav id="dp-tabs" class="dp-tabs" role="tablist" aria-label="Inspector tabs">
+        <button class="dp-tab active" type="button" role="tab" data-tab="summary"   aria-selected="true">SUMMARY</button>
+        <button class="dp-tab" type="button" role="tab" data-tab="headers"   aria-selected="false">HEADERS</button>
+        <button class="dp-tab" type="button" role="tab" data-tab="message"   aria-selected="false">MESSAGE</button>
+        <button class="dp-tab" type="button" role="tab" data-tab="task"      aria-selected="false">TASK</button>
+        <button class="dp-tab" type="button" role="tab" data-tab="artifacts" aria-selected="false">ARTIFACTS</button>
+        <button class="dp-tab" type="button" role="tab" data-tab="raw"       aria-selected="false">RAW</button>
+      </nav>
+
+      <div id="dp-body" class="dp-body" role="tabpanel" aria-label="Decoded content" tabindex="0"></div>
+
+      <div id="dp-empty" class="dp-empty">
+        <span class="dp-empty__icon" aria-hidden="true">&#9636;</span>
+        <span class="dp-empty__text">SELECT A TRANSMISSION FROM THE SPINE TO DECODE ITS A2A PAYLOAD</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ===================== TOAST ===================== -->
+  <div id="toast" class="toast" role="status" aria-live="polite" aria-hidden="true"></div>
+
+  <!-- ===================== MODULES (defer, ordered; app.js boots LAST) ===================== -->
+  <script src="/static/holotable.js" defer></script>
+  <script src="/static/transmission-spine.js" defer></script>
+  <script src="/static/data-pad.js" defer></script>
+  <script src="/static/replay.js" defer></script>
+  <script src="/static/app.js" defer></script>
+</body>
+</html>

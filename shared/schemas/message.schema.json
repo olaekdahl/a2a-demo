@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://resistance.local/schemas/message.schema.json",
+  "title": "Message",
+  "description": "A2A Part, Message, SendMessageRequest and SendMessageResponse (protocol §4, §5).",
+  "$ref": "#/$defs/Message",
+  "$defs": {
+    "Part": {
+      "type": "object",
+      "description": "A Part has either `text` or `data`. `mediaType` is always present.",
+      "additionalProperties": false,
+      "required": ["mediaType"],
+      "properties": {
+        "text": {
+          "type": "string",
+          "description": "Present for text parts."
+        },
+        "data": {
+          "type": "object",
+          "description": "Present for data parts; a free-form JSON object.",
+          "additionalProperties": true
+        },
+        "mediaType": {
+          "type": "string",
+          "examples": ["text/plain", "application/json"]
+        }
+      },
+      "oneOf": [
+        { "required": ["text"], "not": { "required": ["data"] } },
+        { "required": ["data"], "not": { "required": ["text"] } }
+      ]
+    },
+    "Message": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["messageId", "contextId", "role", "parts"],
+      "properties": {
+        "messageId": {
+          "type": "string",
+          "examples": ["msg-7c0e2a4b-0d2d-4b9a-9d1d-4d1c8a2f3e10"]
+        },
+        "contextId": {
+          "type": "string",
+          "examples": ["operation-echo-shield"]
+        },
+        "role": {
+          "type": "string",
+          "enum": ["ROLE_USER", "ROLE_AGENT"],
+          "description": "ROLE_USER (requester) or ROLE_AGENT (responder)."
+        },
+        "parts": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/Part" }
+        },
+        "metadata": {
+          "type": "object",
+          "description": "Free-form object; the keys below are conventional.",
+          "additionalProperties": true,
+          "properties": {
+            "sender": { "type": "string" },
+            "recipient": { "type": "string" },
+            "correlationId": { "type": "string" },
+            "traceId": { "type": "string" },
+            "skillId": { "type": "string" }
+          }
+        }
+      }
+    },
+    "MessageConfiguration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["acceptedOutputModes"],
+      "properties": {
+        "acceptedOutputModes": {
+          "type": "array",
+          "items": { "type": "string" },
+          "examples": [["application/json", "text/plain"]]
+        }
+      }
+    },
+    "SendMessageRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["message"],
+      "properties": {
+        "message": { "$ref": "#/$defs/Message" },
+        "configuration": { "$ref": "#/$defs/MessageConfiguration" }
+      }
+    },
+    "SendMessageResponse": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["task"],
+      "properties": {
+        "task": {
+          "$ref": "task.schema.json#/$defs/Task"
+        }
+      }
+    }
+  }
+}

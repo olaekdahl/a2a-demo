@@ -1,0 +1,180 @@
+# Operation Echo Shield — A2A multi-language demo.
+# Bring the whole galaxy online with:  docker compose up --build
+# Then open the dashboard at http://localhost:8080
+#
+# Startup order (via healthchecks + depends_on):
+#   remote agents (TS + Go)  ->  agent-registry  ->  command-agent
+#   dashboard-api comes up independently (reads the shared DB).
+
+name: starwars-a2a
+
+x-common-env: &common-env
+  A2A_VERSION: "1.0"
+  A2A_DEMO_TOKEN: "resistance-demo-token"
+
+networks:
+  resistance:
+    driver: bridge
+
+volumes:
+  a2a-data:
+
+services:
+  # ------------------------------------------------------------------ TypeScript
+  intelligence-agent:
+    build: { context: ./typescript/intelligence-agent }
+    image: echo-shield/intelligence-agent
+    environment:
+      <<: *common-env
+      PORT: "8011"
+      AGENT_NAME: "intelligence-agent"
+      SELF_URL: "http://intelligence-agent:8011"
+    ports: ["${INTEL_HOST_PORT:-8011}:8011"]
+    networks: [resistance]
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:8011/health',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+
+  communications-relay-agent:
+    build: { context: ./typescript/communications-relay-agent }
+    image: echo-shield/communications-relay-agent
+    environment:
+      <<: *common-env
+      PORT: "8012"
+      AGENT_NAME: "communications-relay-agent"
+      SELF_URL: "http://communications-relay-agent:8012"
+    ports: ["${RELAY_HOST_PORT:-8012}:8012"]
+    networks: [resistance]
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:8012/health',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+
+  # ------------------------------------------------------------------ Go
+  tactical-agent:
+    build: { context: ./go/tactical-agent }
+    image: echo-shield/tactical-agent
+    environment:
+      <<: *common-env
+      PORT: "8021"
+      AGENT_NAME: "tactical-agent"
+      SELF_URL: "http://tactical-agent:8021"
+    ports: ["${TACTICAL_HOST_PORT:-8021}:8021"]
+    networks: [resistance]
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O-", "http://localhost:8021/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+
+  logistics-agent:
+    build: { context: ./go/logistics-agent }
+    image: echo-shield/logistics-agent
+    environment:
+      <<: *common-env
+      PORT: "8022"
+      AGENT_NAME: "logistics-agent"
+      SELF_URL: "http://logistics-agent:8022"
+    ports: ["${LOGISTICS_HOST_PORT:-8022}:8022"]
+    networks: [resistance]
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O-", "http://localhost:8022/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+
+  fleet-agent:
+    build: { context: ./go/fleet-agent }
+    image: echo-shield/fleet-agent
+    environment:
+      <<: *common-env
+      PORT: "8023"
+      AGENT_NAME: "fleet-agent"
+      SELF_URL: "http://fleet-agent:8023"
+    ports: ["${FLEET_HOST_PORT:-8023}:8023"]
+    networks: [resistance]
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O-", "http://localhost:8023/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+
+  # ------------------------------------------------------------------ Python: registry
+  agent-registry:
+    build: { context: ., dockerfile: python/registry-service/Dockerfile }
+    image: echo-shield/agent-registry
+    environment:
+      <<: *common-env
+      PORT: "8000"
+      A2A_DB_PATH: "/data/mission.db"
+      AGENT_ENDPOINTS: "intelligence-agent|typescript|http://intelligence-agent:8011,communications-relay-agent|typescript|http://communications-relay-agent:8012,tactical-agent|go|http://tactical-agent:8021,logistics-agent|go|http://logistics-agent:8022,fleet-agent|go|http://fleet-agent:8023,resistance-command-agent|python|http://command-agent:8001"
+    volumes: ["a2a-data:/data"]
+    ports: ["${REGISTRY_HOST_PORT:-8000}:8000"]
+    networks: [resistance]
+    depends_on:
+      intelligence-agent: { condition: service_healthy }
+      communications-relay-agent: { condition: service_healthy }
+      tactical-agent: { condition: service_healthy }
+      logistics-agent: { condition: service_healthy }
+      fleet-agent: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+      start_period: 5s
+
+  # ------------------------------------------------------------------ Python: command
+  command-agent:
+    build: { context: ., dockerfile: python/command-agent/Dockerfile }
+    image: echo-shield/command-agent
+    environment:
+      <<: *common-env
+      PORT: "8001"
+      A2A_DB_PATH: "/data/mission.db"
+      REGISTRY_URL: "http://agent-registry:8000"
+      # Default OFF so the dashboard opens NOMINAL — press DISPATCH MISSION in the
+      # UI (or run scripts/run-mission.sh) to run the operation and watch the A2A
+      # flow unfold live. Set AUTOSTART_MISSION=true to auto-run once on startup.
+      AUTOSTART_MISSION: "${AUTOSTART_MISSION:-false}"
+      MISSION_START_DELAY_SECONDS: "6"
+      FAILURE_SIMULATION: "${FAILURE_SIMULATION:-false}"
+    volumes: ["a2a-data:/data"]
+    ports: ["${COMMAND_HOST_PORT:-8001}:8001"]
+    networks: [resistance]
+    depends_on:
+      agent-registry: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://localhost:8001/health')"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+      start_period: 5s
+
+  # ------------------------------------------------------------------ Python: dashboard
+  dashboard-api:
+    build: { context: ., dockerfile: python/dashboard-api/Dockerfile }
+    image: echo-shield/dashboard-api
+    environment:
+      <<: *common-env
+      PORT: "8080"
+      A2A_DB_PATH: "/data/mission.db"
+      REGISTRY_URL: "http://agent-registry:8000"
+      COMMAND_AGENT_URL: "http://command-agent:8001"
+    volumes: ["a2a-data:/data"]
+    ports: ["${DASHBOARD_HOST_PORT:-8080}:8080"]
+    networks: [resistance]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://localhost:8080/health')"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+      start_period: 5s

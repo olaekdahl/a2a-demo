@@ -1,0 +1,25 @@
+{
+  "artifactId": "art-8a0c2e46-3f51-4d79-9b2c-4d6e8f0a1b2c",
+  "name": "deployment-order",
+  "description": "Fleet deployment order reinforcing Echo Base on Hoth.",
+  "parts": [
+    {
+      "data": {
+        "deployment_status": "DEPLOYED",
+        "destination": "Hoth",
+        "eta_minutes": 18,
+        "units_deployed": {
+          "troop_transports": 8,
+          "x_wing_squadrons": 3,
+          "medical_units": 4,
+          "ground_troops": 1200
+        },
+        "transmission": "Rogue transports are inbound. Reinforcements en route to Echo Base."
+      },
+      "mediaType": "application/json"
+    }
+  ],
+  "metadata": {
+    "producedBy": "fleet-agent"
+  }
+}
