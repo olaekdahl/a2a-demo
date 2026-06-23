@@ -762,8 +762,56 @@ a:focus-visible {
   position: absolute; inset: 0; width: 100%; height: 100%;
 }
 #holotable { z-index: 1; }
+.holotable-radar-sweep {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.34;
+  transform-origin: 50% 52%;
+  animation: ec-radar-sweep 14s linear infinite;
+  background:
+    radial-gradient(circle at 50% 52%, rgba(79,214,230,0.16) 0%, rgba(79,214,230,0.08) 7%, rgba(79,214,230,0) 16%),
+    radial-gradient(circle at 50% 52%, rgba(79,214,230,0.04) 0%, rgba(79,214,230,0) 42%);
+  clip-path: circle(41% at 50% 52%);
+  mix-blend-mode: screen;
+}
+.holotable-radar-sweep::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 52%;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(79,214,230,0.65);
+  box-shadow: 0 0 8px rgba(79,214,230,0.4);
+}
+.holotable-radar-sweep::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 52%;
+  width: 41%;
+  height: 1.6px;
+  transform: translateY(-50%);
+  transform-origin: 0 50%;
+  background: linear-gradient(
+    90deg,
+    rgba(79,214,230,0.92) 0%,
+    rgba(79,214,230,0.48) 45%,
+    rgba(79,214,230,0.0) 100%
+  );
+  filter: drop-shadow(0 0 3px rgba(79,214,230,0.4));
+}
+body.is-static-snapshot .holotable-radar-sweep {
+  animation: none;
+  opacity: 0.3;
+  transform: rotate(42deg);
+}
 /* Canvas FX layer disabled: its viewBox→pixel mapping rendered a second,
-   off-centre sweep. The thin SVG sweep line is the single radar sweep. */
+   off-centre sweep. Keep one CSS sweep system active to avoid duplicates. */
 .holotable-fx { z-index: 0; display: none; }
 
 /* ===== holotable SVG primitives — class names MATCH holotable.js exactly ===== */
@@ -787,12 +835,11 @@ a:focus-visible {
 .ht-base-pulse { fill: none; stroke: var(--ok); stroke-width: 1.4; transform-box: fill-box; transform-origin: center; animation: ec-pulse 2.2s ease-out infinite; }
 .ht-base-label { fill: #c8f4dd; font-family: var(--font-mono); font-size: 9.5px; font-weight: 700; letter-spacing: 0.12em; }
 
-/* Radar sweep: a single centred rotating wedge (the canvas FX layer that drew a
-   SECOND, off-centre sweep stays disabled above). Subtle so it reads as a sweep
-   without clutter. */
-.ht-sweep { transform-origin: center; }
-.ht-sweep-wedge { fill: url(#ht-sweep-grad); opacity: 0.22; }
-.ht-sweep-line { stroke: rgba(79,214,230,0.5); stroke-width: 1.2; }
+/* Disable legacy SVG sweep primitives. CSS .holotable-radar-sweep is the single
+  active sweep source so only one rotating scan line is visible. */
+.ht-sweep { display: none; }
+.ht-sweep-wedge { display: none; }
+.ht-sweep-line { display: none; }
 
 /* agent nodes — language shapes (BRIGHT, clearly readable) */
 .ht-node { transition: filter var(--t-fast); }
@@ -1399,6 +1446,7 @@ a:focus-visible {
   }
   /* explicitly disable signature motion */
   .scanlines::after,
+  .holotable-radar-sweep,
   .ht-sweep,
   .ht-beam,
   .ht-threat.threat--high,

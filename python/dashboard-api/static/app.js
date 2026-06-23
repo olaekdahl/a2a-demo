@@ -123,10 +123,14 @@
     return parsed;
   }
 
+  function isStaticSnapshot() {
+    return /[?&]static=1\b/.test(location.search);
+  }
+
   function prefersReducedMotion() {
     // Static snapshot mode also reports reduced motion so continuous rAF loops
     // (e.g. the radar sweep) stop, letting a headless renderer settle.
-    if (/[?&]static=1\b/.test(location.search)) return true;
+    if (isStaticSnapshot()) return true;
     return !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
   }
 
@@ -933,7 +937,7 @@
     // Static snapshot mode (?static=1): load data once but skip the persistent
     // SSE link. Useful for screenshots / headless rendering where an open
     // EventSource would keep the page from ever reaching network-idle.
-    if (/[?&]static=1\b/.test(location.search)) {
+    if (isStaticSnapshot()) {
       setConn("idle", "STATIC SNAPSHOT");
       return;
     }
@@ -1156,6 +1160,10 @@
      18. INIT
      =================================================================== */
   function init() {
+    if (isStaticSnapshot()) {
+      document.body.classList.add("is-static-snapshot");
+    }
+
     // Live clock.
     tickClock();
     window.setInterval(tickClock, 1000);
