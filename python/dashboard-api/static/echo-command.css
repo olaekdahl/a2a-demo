@@ -364,6 +364,7 @@ a:focus-visible {
   background: var(--panel-2);
   border: var(--line-thin) solid var(--panel-edge);
   border-radius: var(--radius);
+  text-decoration: none;
   clip-path: polygon(var(--notch-sm) 0, 100% 0, 100% calc(100% - var(--notch-sm)), calc(100% - var(--notch-sm)) 100%, 0 100%, 0 var(--notch-sm));
   transition: background var(--t-fast), border-color var(--t-fast), color var(--t-fast);
 }

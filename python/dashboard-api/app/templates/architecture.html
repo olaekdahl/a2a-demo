@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Operation Echo Shield - Architecture Map</title>
+  <link rel="stylesheet" href="/static/architecture-diagram.css?v=20260623-archmap3" />
+</head>
+<body>
+  <header class="arch-top">
+    <div class="arch-title-wrap">
+      <p class="arch-kicker">Operation Echo Shield</p>
+      <h1>System Architecture Map</h1>
+      <p class="arch-sub">A visual communication map of every service, endpoint, and data flow in the live A2A mission.</p>
+    </div>
+    <div class="arch-actions">
+      <a class="arch-btn arch-btn--primary" href="/">Return To Console</a>
+    </div>
+  </header>
+
+  <main class="arch-main">
+    <section class="arch-board-shell" aria-label="Architecture communication diagram">
+      <div class="arch-board">
+        <div class="arch-lane lane-core" aria-hidden="true"></div>
+        <div class="arch-lane lane-typescript" aria-hidden="true"></div>
+        <div class="arch-lane lane-go" aria-hidden="true"></div>
+        <div class="arch-lane lane-data" aria-hidden="true"></div>
+
+        <div class="arch-group-label g-python">Python Services</div>
+        <div class="arch-group-label g-typescript">TypeScript Services</div>
+        <div class="arch-group-label g-go">Go Services</div>
+        <div class="arch-group-label g-data">Data Plane</div>
+
+        <div class="arch-a2a-bus">A2A HTTP + JSON WIRE CONTRACT v{{ a2a_version }}</div>
+
+        <svg class="arch-wires" viewBox="0 0 1580 980" role="img" aria-label="Connection lines between all services">
+          <defs>
+            <marker id="arrow-sync" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#e7aa62" />
+            </marker>
+            <marker id="arrow-stream" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#62d8ed" />
+            </marker>
+            <marker id="arrow-discovery" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#9db8d4" />
+            </marker>
+            <marker id="arrow-data" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#6bcf92" />
+            </marker>
+          </defs>
+
+          <path class="wire wire-sync" d="M 773 141 L 773 210" marker-end="url(#arrow-sync)" />
+          <path class="wire wire-stream" d="M 837 210 L 837 141" marker-end="url(#arrow-stream)" />
+
+          <path class="wire wire-discovery" d="M 660 496 L 510 496" marker-end="url(#arrow-discovery)" />
+
+          <path class="wire wire-stream" d="M 910 470 C 970 420 995 300 1040 225" marker-end="url(#arrow-stream)" />
+          <path class="wire wire-sync" d="M 910 500 C 1030 470 1130 452 1240 444" marker-end="url(#arrow-sync)" />
+          <path class="wire wire-sync" d="M 910 530 C 955 575 950 655 980 655" marker-end="url(#arrow-sync)" />
+          <path class="wire wire-sync" d="M 910 545 C 1030 600 1135 655 1240 655" marker-end="url(#arrow-sync)" />
+          <path class="wire wire-stream" d="M 900 560 C 970 660 1020 770 1110 865" marker-end="url(#arrow-stream)" />
+
+          <path class="wire wire-discovery" d="M 510 468 C 690 390 860 290 1040 225" marker-end="url(#arrow-discovery)" />
+          <path class="wire wire-discovery" d="M 510 482 C 730 430 980 430 1240 444" marker-end="url(#arrow-discovery)" />
+          <path class="wire wire-discovery" d="M 510 500 C 690 545 840 615 980 655" marker-end="url(#arrow-discovery)" />
+          <path class="wire wire-discovery" d="M 510 512 C 760 565 1000 640 1240 655" marker-end="url(#arrow-discovery)" />
+          <path class="wire wire-discovery" d="M 510 528 C 760 660 920 785 1110 865" marker-end="url(#arrow-discovery)" />
+
+          <path class="wire wire-data" d="M 860 321 C 890 460 875 650 840 790" marker-end="url(#arrow-data)" />
+          <path class="wire wire-data" d="M 786 610 C 786 680 786 732 786 790" marker-end="url(#arrow-data)" />
+          <path class="wire wire-data" d="M 385 541 C 470 650 560 760 660 845" marker-end="url(#arrow-data)" />
+
+          <text class="wire-label" x="852" y="178">SSE stream</text>
+          <text class="wire-label" x="538" y="479">GET /agents/search</text>
+          <text class="wire-label" x="1028" y="515">POST /message:send</text>
+          <text class="wire-label" x="1006" y="430">POST /message:stream</text>
+          <text class="wire-label" x="640" y="356">Agent Card discovery fanout</text>
+          <text class="wire-label" x="712" y="732">SQLite WAL reads and writes</text>
+        </svg>
+
+        <article class="node node-browser node--edge">
+          <h3>Browser Console</h3>
+          <p class="node-meta">Operator interface</p>
+          <ul>
+            <li>GET /</li>
+            <li>GET /api/events/stream</li>
+          </ul>
+        </article>
+
+        <article class="node node-dashboard node--python">
+          <h3>dashboard-api :8080</h3>
+          <p class="node-meta">Read APIs + SSE fanout</p>
+          <ul>
+            <li>Timeline, artifacts, audit, replay</li>
+            <li>Proxies run/reset to command-agent</li>
+          </ul>
+        </article>
+
+        <article class="node node-command node--python node--core">
+          <h3>command-agent :8001</h3>
+          <p class="node-meta">Mission orchestrator</p>
+          <ul>
+            <li>Discovers skills via registry</li>
+            <li>Coordinates send + stream hops</li>
+            <li>Writes mission, tasks, artifacts</li>
+          </ul>
+        </article>
+
+        <article class="node node-registry node--python">
+          <h3>agent-registry :8000</h3>
+          <p class="node-meta">Discovery index</p>
+          <ul>
+            <li>Refreshes and stores agent cards</li>
+            <li>Searches by skill id</li>
+          </ul>
+        </article>
+
+        <article class="node node-intel node--typescript">
+          <h3>intelligence-agent :8011</h3>
+          <p class="node-meta">Streaming scout</p>
+          <ul>
+            <li>Orbit and surface scan phases</li>
+            <li>Emits intelligence-report artifact</li>
+          </ul>
+        </article>
+
+        <article class="node node-relay node--typescript">
+          <h3>communications-relay-agent :8012</h3>
+          <p class="node-meta">Secure relay</p>
+          <ul>
+            <li>POST /message:send</li>
+            <li>Returns secure-transmission</li>
+          </ul>
+        </article>
+
+        <article class="node node-tactical node--go">
+          <h3>tactical-agent :8021</h3>
+          <p class="node-meta">Risk scoring</p>
+          <ul>
+            <li>Deterministic threat assessment</li>
+            <li>Returns tactical-assessment</li>
+          </ul>
+        </article>
+
+        <article class="node node-logistics node--go">
+          <h3>logistics-agent :8022</h3>
+          <p class="node-meta">Capacity planning</p>
+          <ul>
+            <li>Transport and fuel model</li>
+            <li>Returns logistics-assessment</li>
+          </ul>
+        </article>
+
+        <article class="node node-fleet node--go">
+          <h3>fleet-agent :8023</h3>
+          <p class="node-meta">Streaming deployment</p>
+          <ul>
+            <li>Route, load, jump, arrive phases</li>
+            <li>Emits deployment-order artifact</li>
+          </ul>
+        </article>
+
+        <article class="node node-db node--data">
+          <h3>SQLite mission.db</h3>
+          <p class="node-meta">Shared persistent timeline</p>
+          <ul>
+            <li>missions, transmissions, artifacts</li>
+            <li>tasks, status updates, audit logs</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <aside class="arch-meta-grid" aria-label="Diagram legend and mission sequence">
+      <article class="meta-card">
+        <h2>Communication Legend</h2>
+        <ul class="legend-list">
+          <li><span class="swatch swatch-sync"></span> Sync calls: POST /message:send</li>
+          <li><span class="swatch swatch-stream"></span> Streaming calls: POST /message:stream + SSE events</li>
+          <li><span class="swatch swatch-discovery"></span> Discovery: GET /agents/search + GET /.well-known/agent-card.json</li>
+          <li><span class="swatch swatch-data"></span> Data plane: SQLite reads/writes from Python services</li>
+        </ul>
+      </article>
+
+      <article class="meta-card">
+        <h2>Mission Hop Sequence</h2>
+        <ol class="hop-list">
+          <li>Command refreshes registry and discovers scout_system.</li>
+          <li>Intelligence streams status updates and publishes intelligence-report.</li>
+          <li>Tactical returns deterministic threat and risk scoring.</li>
+          <li>Logistics computes transport, fuel, and troop movement.</li>
+          <li>Communications relay secures and encodes the payload.</li>
+          <li>Fleet streams deployment phases and final deployment-order.</li>
+        </ol>
+      </article>
+    </aside>
+  </main>
+
+  <script>
+    (function () {
+      function centerBoardOnCore() {
+        var shell = document.querySelector('.arch-board-shell');
+        var core = document.querySelector('.node-command');
+        if (!shell || !core) return;
+
+        var targetX = core.offsetLeft + (core.offsetWidth / 2) - (shell.clientWidth / 2);
+        var targetY = core.offsetTop + (core.offsetHeight / 2) - (shell.clientHeight / 2) - 40;
+
+        shell.scrollLeft = Math.max(0, Math.round(targetX));
+        shell.scrollTop = Math.max(0, Math.round(targetY));
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', centerBoardOnCore);
+      } else {
+        centerBoardOnCore();
+      }
+    })();
+  </script>
+</body>
+</html>

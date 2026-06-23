@@ -192,6 +192,19 @@ async def index(request: Request) -> HTMLResponse:
     )
 
 
+@app.get("/architecture", response_class=HTMLResponse)
+async def architecture_page(request: Request) -> HTMLResponse:
+    return templates.TemplateResponse(
+        "architecture.html",
+        {
+            "request": request,
+            "service": SERVICE_NAME,
+            "version": "1.0.0",
+            "a2a_version": A2A_VERSION,
+        },
+    )
+
+
 @app.get("/health")
 async def health() -> JSONResponse:
     return JSONResponse({"status": "ok"})
