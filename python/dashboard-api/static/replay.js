@@ -342,7 +342,10 @@
       });
     },
 
-    stop: function stop() {
+    stop: function stop(options) {
+      options = options || {};
+      var skipReload = !!options.skipReload;
+
       // Invalidate any in-flight ticks.
       seq++;
       running = false;
@@ -369,6 +372,10 @@
           if (!Echo.replay.active) setFill(0);
         }, 700);
       }
+
+      // Some callers (RESET) need to stop replay without reloading live data,
+      // because they are about to clear state and call a backend reset.
+      if (skipReload) return;
 
       // ---- restore the LIVE view ----
       // Prefer a dedicated app reloader if present; otherwise re-fetch the live

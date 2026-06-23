@@ -151,6 +151,7 @@
     mission: null,
     derived: { intel: null, threat: null, logistics: null, troop: null },
     replaying: false,
+    resetting: false,
     // ACTIVE-ALERT layer: the imperial sector + header red-alert only show during
     // a live dispatch or a replay (between the tactical hop and reinforcement
     // arrival) — NEVER on initial load. The THREAT ASSESSMENT level itself
@@ -957,19 +958,19 @@
     });
 
     es.addEventListener("transmission", function (ev) {
-      if (state.replaying) return;
+      if (state.replaying || state.resetting) return;
       var d = safeParse(ev.data);
       if (d && d.transmission) onTransmission(d.transmission);
     });
 
     es.addEventListener("status-update", function (ev) {
-      if (state.replaying) return;
+      if (state.replaying || state.resetting) return;
       var d = safeParse(ev.data);
       if (d && d.statusUpdate) onStatusUpdate(d.statusUpdate);
     });
 
     es.addEventListener("mission", function (ev) {
-      if (state.replaying) return;
+      if (state.replaying || state.resetting) return;
       var d = safeParse(ev.data);
       if (d) onMission(d.mission || null);
     });
@@ -1009,12 +1010,21 @@
 
   function resetMission() {
     var btn = $("btn-reset");
+    state.resetting = true;
     if (btn) { btn.disabled = true; btn.setAttribute("aria-busy", "true"); }
     clearView();
     toast("CONSOLE RESET — STANDBY");
     getJSON("/api/reset-mission", { method: "POST", headers: { "Content-Type": "application/json" } })
       .catch(function () { /* view already cleared; backend reset is best-effort */ })
-      .then(function () { if (btn) { btn.disabled = false; btn.removeAttribute("aria-busy"); } });
+      .then(function () {
+        // mission:reset can wait behind a running mission lock; clear once more
+        // after it returns so interim SSE rows do not linger in the UI.
+        clearView();
+      })
+      .then(function () {
+        state.resetting = false;
+        if (btn) { btn.disabled = false; btn.removeAttribute("aria-busy"); }
+      });
   }
 
   function runMission() {
@@ -1056,7 +1066,9 @@
 
     var reset = $("btn-reset");
     if (reset) reset.addEventListener("click", function () {
-      call("replay", "stop");   // halt any replay first
+      // Stop replay timers without triggering replay.js live reload; resetMission
+      // clears local UI and then calls /api/reset-mission itself.
+      call("replay", "stop", { skipReload: true });
       var stop = $("btn-replay-stop"); if (stop) stop.hidden = true;
       resetMission();
     });
