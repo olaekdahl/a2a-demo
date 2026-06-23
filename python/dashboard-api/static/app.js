@@ -245,10 +245,12 @@
       setText("ch-context", CONTEXT_ID);
     }
 
-    // Threat readout mirrors the THREAT ASSESSMENT module exactly (the analysis
-    // result) so the two never disagree.
-    var band = threatBand();
-    var label = { low: "LOW", mod: "MODERATE", high: "HIGH", unknown: "NOMINAL" }[band] || "NOMINAL";
+    // Once reinforcements are deployed, the visible threat state is contained.
+    var complete = isMissionComplete();
+    var band = complete ? "low" : threatBand();
+    var label = complete
+      ? "NOMINAL"
+      : ({ low: "LOW", mod: "MODERATE", high: "HIGH", unknown: "NOMINAL" }[band] || "NOMINAL");
     setText("ch-threat", label);
     var threatNode = $("ch-threat");
     if (threatNode) {
@@ -261,7 +263,6 @@
     setText("ch-protocol", "A2A/" + ver);
 
     // Mission complete → reveal stamp + final summary.
-    var complete = m && String(m.status).toLowerCase() === "completed";
     var stamp = $("mission-stamp");
     if (stamp) {
       if (complete) {
@@ -407,17 +408,22 @@
     return "unknown";
   }
 
+  function isMissionComplete() {
+    return !!(state.mission && String(state.mission.status || "").toLowerCase() === "completed");
+  }
+
   /* ===================================================================
      7. THREAT ASSESSMENT (#mod-threat — risk band / heatmap)
      =================================================================== */
   function renderThreat() {
     var t = state.derived.threat;
-    var band = threatBand();
+    var complete = isMissionComplete();
+    var band = complete ? "low" : threatBand();
     var gauge = $("threat-gauge");
     if (gauge) {
       gauge.className = "ht-threat-gauge threat--" + band;
-      var pct = 0;
-      if (t && t.risk_score != null) {
+      var pct = complete ? 10 : 0;
+      if (!complete && t && t.risk_score != null) {
         var n = Number(t.risk_score);
         if (n <= 1) n = n * 100;
         pct = Math.max(0, Math.min(100, n));
@@ -428,15 +434,19 @@
         ", risk score " + Math.round(pct));
     }
 
-    setText("threat-level", t ? (t.threat_level ? String(t.threat_level).toUpperCase() : band.toUpperCase()) : "—");
-    setText("threat-score", t && t.risk_score != null ? Math.round((Number(t.risk_score) <= 1 ? Number(t.risk_score) * 100 : Number(t.risk_score))) : "—");
+    setText("threat-level", complete ? "CONTAINED" : (t ? (t.threat_level ? String(t.threat_level).toUpperCase() : band.toUpperCase()) : "—"));
+    setText("threat-score", complete ? "STABLE" : (t && t.risk_score != null ? Math.round((Number(t.risk_score) <= 1 ? Number(t.risk_score) * 100 : Number(t.risk_score))) : "—"));
 
     var reco = $("threat-reco");
     if (reco) {
-      reco.textContent = (t && t.recommended_action) ? t.recommended_action : "—";
-      reco.classList.toggle("threat-reco--alert", band === "high");
+      reco.textContent = complete
+        ? "SECTOR SECURED — MAINTAIN PERIMETER"
+        : ((t && t.recommended_action) ? t.recommended_action : "—");
+      reco.classList.toggle("threat-reco--alert", !complete && band === "high");
     }
-    setText("threat-rationale", t && t.rationale ? t.rationale : "—");
+    setText("threat-rationale", complete
+      ? "Reinforcements deployed. Imperial advance contained around Echo Base."
+      : (t && t.rationale ? t.rationale : "—"));
 
     // Priority targets.
     var targets = $("threat-targets");
@@ -722,7 +732,7 @@
     setTroopPhase: function (phase) { renderTroopTrack(phase); },
     // Used by replay.js stop() to restore the live view after a replay. The
     // archived mission already concluded, so the live view rests CALM (the
-    // active-alert layer stays down; the assessment readout shows the analysis).
+    // active-alert layer stays down and threat display resolves to contained).
     reloadLive: function () {
       state.threatActive = false;
       loadMission(); loadTimeline(); loadTroop();
@@ -741,7 +751,11 @@
     return getJSON("/api/mission").then(function (res) {
       state.mission = res ? res.mission : null;
       renderHeader();
-    }).catch(function () { renderHeader(); });
+      renderThreat();
+    }).catch(function () {
+      renderHeader();
+      renderThreat();
+    });
   }
 
   function loadAgents() {
@@ -820,7 +834,7 @@
      NARRATIVE — "nominal … ⚠ Imperial contact … coordinate … deployed"
      =================================================================== */
   // Clear the active-alert layer back to calm (no imperial sector, no red-alert).
-  // The THREAT ASSESSMENT readout/module are untouched — they show the analysis.
+  // The threat module state is resolved by mission status in renderThreat().
   function resetNarrative() {
     if (alertTimer) { clearTimeout(alertTimer); alertTimer = null; }
     state.threatActive = false;
@@ -919,6 +933,7 @@
   function onMission(m) {
     state.mission = m || null;
     renderHeader();
+    renderThreat();
     if (m && String(m.status).toLowerCase() === "completed") {
       // Lock holotable route to final state.
       call("holotable", "setPhase", "completed");
